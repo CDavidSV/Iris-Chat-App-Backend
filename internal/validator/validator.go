@@ -111,10 +111,6 @@ func applyValidationRule(rule string, result *ValidationResult, field reflect.Va
 	return nil
 }
 
-func ParseBodyAndValidate(c *fiber.Ctx) {
-
-}
-
 func newValidationError(fieldName, field, errorString string) ValidationError {
 	return ValidationError{
 		FieldName: fieldName,

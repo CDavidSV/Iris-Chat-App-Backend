@@ -10,6 +10,7 @@ import (
 	"github.com/CDavidSV/Iris-Chat-App-Backend/cmd/api/handlers"
 	"github.com/CDavidSV/Iris-Chat-App-Backend/internal/models"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -50,6 +51,12 @@ func main() {
 	// setup logger
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "02/06/2006 15:04:05",
+	}))
+
+	// cors config
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5173",
+		AllowMethods: "POST, GET, OPTION, PUT, DELETE, HEAD",
 	}))
 
 	server := &handlers.Server{

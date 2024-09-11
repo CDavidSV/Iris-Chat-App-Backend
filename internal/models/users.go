@@ -14,10 +14,12 @@ import (
 type User struct {
 	UserID            string
 	Username          string
+	DisplayName       NullString
 	Email             string
 	Password          string
 	JoinedAt          time.Time
 	UpdatedAt         time.Time
+	Verified          bool
 	CustomStatus      NullString
 	ProfilePictureURL NullString
 }
@@ -25,6 +27,7 @@ type User struct {
 type UserDTO struct {
 	UserID            string
 	Username          string
+	DisplayName       NullString
 	Email             string
 	JoinedAt          time.Time
 	UpdatedAt         time.Time
@@ -92,11 +95,11 @@ func (m *UserModel) Authenticate(email, password string) (string, error) {
 }
 
 func (m *UserModel) FetchUser(userID string) (UserDTO, error) {
-	query := "SELECT userID, username, email, joinedAt, customStatus, profilePictureURL, updatedAt FROM users WHERE userID = $1"
+	query := "SELECT userID, username, email, joinedAt, customStatus, profilePictureURL, updatedAt, displayName FROM users WHERE userID = $1"
 
 	user := UserDTO{}
 	row := m.DB.QueryRow(context.Background(), query, userID)
-	err := row.Scan(&user.UserID, &user.Username, &user.Email, &user.JoinedAt, &user.CustomStatus, &user.ProfilePictureURL, &user.UpdatedAt)
+	err := row.Scan(&user.UserID, &user.Username, &user.Email, &user.JoinedAt, &user.CustomStatus, &user.ProfilePictureURL, &user.UpdatedAt, &user.DisplayName)
 	if err != nil {
 		return user, err
 	}

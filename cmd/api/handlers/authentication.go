@@ -17,14 +17,14 @@ type registerUserDTO struct {
 	Email    string `validate:"email,req"`
 	Username string `validate:"min=1,max=30,req"`
 	Password string `validate:"min=8,max=50,req"`
-	Device   string `validate:"req"`
+	Platform string `validate:"req"`
 	OS       string `validate:"req"`
 }
 
 type loginUserDTO struct {
 	Username string `validate:"email,req"`
 	Password string `validate:"min=8,max=50,req"`
-	Device   string `validate:"req"`
+	Platform string `validate:"req"`
 	OS       string `validate:"req"`
 }
 
@@ -58,18 +58,24 @@ func (s *Server) Register(c *fiber.Ctx) error {
 
 	if err != nil {
 		if errors.Is(err, models.ErrDuplicateEmail) {
-			return internal.ClientError(c, http.StatusUnprocessableEntity, "Email already in use")
+			return internal.ClientError(c, http.StatusUnprocessableEntity, internal.DefaultError{
+				Code:    "EMAIL_ALREADY_REGISTERED",
+				Message: "This email has already been used",
+			})
 		}
 
 		if errors.Is(err, models.ErrDuplicateUsername) {
-			return internal.ClientError(c, http.StatusUnprocessableEntity, "Username already in use")
+			return internal.ClientError(c, http.StatusUnprocessableEntity, internal.DefaultError{
+				Code:    "USERNAME_ALREADY_REGISTERED",
+				Message: "This username is already in use",
+			})
 		}
 
 		return err
 	}
 
 	// Generate access and refresh tokens
-	session, err := s.Sessions.NewSession(userID, registeruserDTO.Device, registeruserDTO.OS, c.IP())
+	session, err := s.Sessions.NewSession(userID, registeruserDTO.Platform, registeruserDTO.OS, c.IP())
 	if err != nil {
 		return internal.ServerError(c, err, "Failed to establish user session")
 	}
@@ -117,13 +123,16 @@ func (s *Server) Login(c *fiber.Ctx) error {
 	userID, err := s.Users.Authenticate(loginuserDTO.Username, loginuserDTO.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
-			return internal.ClientError(c, http.StatusUnauthorized, "Invalid email address or password")
+			return internal.ClientError(c, http.StatusUnauthorized, internal.DefaultError{
+				Code:    "INVALID_CREDENTIALS",
+				Message: "email or password is incorrect",
+			})
 		}
 
 		return internal.ServerError(c, err, "Failed to authenticate user")
 	}
 
-	session, err := s.Sessions.NewSession(userID, loginuserDTO.Device, loginuserDTO.OS, c.IP())
+	session, err := s.Sessions.NewSession(userID, loginuserDTO.Platform, loginuserDTO.OS, c.IP())
 	if err != nil {
 		return internal.ServerError(c, err, "Failed to establish user session")
 	}
@@ -170,7 +179,10 @@ func (s *Server) Logout(c *fiber.Ctx) error {
 	err = s.Sessions.DeleteSession(c.Locals("sessionID").(string), logoutuserDTO.Token)
 	if err != nil {
 		if errors.Is(err, models.ErrNoSessionsFound) {
-			return internal.ClientError(c, http.StatusUnprocessableEntity, "No sessions found")
+			return internal.ClientError(c, http.StatusUnprocessableEntity, internal.DefaultError{
+				Code:    "SESSION_NOT_FOUND",
+				Message: "No session found",
+			})
 		}
 	}
 
@@ -200,9 +212,15 @@ func (s *Server) Token(c *fiber.Ctx) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrInvalidSession):
-			return internal.ClientError(c, http.StatusUnauthorized, "session data is invalid")
+			return internal.ClientError(c, http.StatusUnauthorized, internal.DefaultError{
+				Code:    "INVALID_SESSION",
+				Message: "Invalid session data",
+			})
 		case errors.Is(err, models.ErrSessionExpired):
-			return internal.ClientError(c, http.StatusUnauthorized, "session has expired")
+			return internal.ClientError(c, http.StatusUnauthorized, internal.DefaultError{
+				Code:    "SESSION_EXPIRED",
+				Message: "Session has expired",
+			})
 		default:
 			return internal.ServerError(c, err, "Unable to revalidate session")
 		}

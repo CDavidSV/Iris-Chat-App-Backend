@@ -16,7 +16,7 @@ type Session struct {
 	UserID       string
 	RefreshToken string
 	IpAddress    string
-	Device       string
+	Platform     string
 	OS           string
 	ExpiresAt    time.Time
 	UpdatedAt    time.Time
@@ -38,7 +38,7 @@ func generateRefreshToken() (string, time.Time) {
 	return uuid.New().String(), time.Now().Add(RefreshTokenExpirationDelta)
 }
 
-func (m *SessionsModel) NewSession(userID, device, os, ip string) (NewSession, error) {
+func (m *SessionsModel) NewSession(userID, platform, os, ip string) (NewSession, error) {
 	sessionID := internal.GenerateID()
 
 	newSession := NewSession{
@@ -50,8 +50,8 @@ func (m *SessionsModel) NewSession(userID, device, os, ip string) (NewSession, e
 	newSession.RefreshToken = refreshToken
 
 	// Insert session in db
-	query := "INSERT INTO sessions (sessionID, userID, refreshToken, ipAddress, device, os, expiresAt) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-	_, err := m.DB.Exec(context.Background(), query, sessionID, userID, refreshToken, ip, device, os, expiresAt)
+	query := "INSERT INTO sessions (sessionID, userID, refreshToken, ipAddress, platform, os, expiresAt) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	_, err := m.DB.Exec(context.Background(), query, sessionID, userID, refreshToken, ip, platform, os, expiresAt)
 	if err != nil {
 		return NewSession{}, err
 	}
@@ -65,7 +65,7 @@ func (m *SessionsModel) RevalidateSession(sessionID string, refreshToken string)
 	row := m.DB.QueryRow(context.Background(), query, sessionID)
 
 	session := Session{}
-	err := row.Scan(&session.SessionID, &session.UserID, &session.RefreshToken, &session.IpAddress, &session.Device, &session.OS, &session.ExpiresAt, &session.UpdatedAt)
+	err := row.Scan(&session.SessionID, &session.UserID, &session.RefreshToken, &session.IpAddress, &session.Platform, &session.OS, &session.ExpiresAt, &session.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return NewSession{}, ErrSessionExpired

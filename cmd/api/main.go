@@ -9,6 +9,7 @@ import (
 
 	"github.com/CDavidSV/Iris-Chat-App-Backend/cmd/api/handlers"
 	"github.com/CDavidSV/Iris-Chat-App-Backend/internal/models"
+	"github.com/CDavidSV/Iris-Chat-App-Backend/internal/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -59,10 +60,20 @@ func main() {
 		AllowMethods: "POST, GET, OPTION, PUT, DELETE, HEAD",
 	}))
 
+	websocketServer := websocket.WebsocketServer{
+		DB:                pool,
+		AccessTokenSecret: os.Getenv("ACCESS_TOKEN_SECRET"),
+	}
+
+	// websockets
+	app.Use("/ws", websocketServer.WebsocketUpgrade)
+	app.Get("/ws", websocketServer.NewWebsocket())
+
 	server := &handlers.Server{
-		DBpool:   pool,
-		Users:    &models.UserModel{DB: pool},
-		Sessions: &models.SessionsModel{DB: pool},
+		DBpool:        pool,
+		Users:         &models.UserModel{DB: pool},
+		Sessions:      &models.SessionsModel{DB: pool},
+		Relationships: &models.RelationshipModel{DB: pool},
 	}
 
 	// load routes

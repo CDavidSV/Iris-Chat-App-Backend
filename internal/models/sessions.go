@@ -100,10 +100,10 @@ func (m *SessionsModel) RevalidateSession(sessionID string, refreshToken string)
 	}, nil
 }
 
-func (m *SessionsModel) DeleteSession(sessionID, refreshToken string) error {
-	query := "DELETE FROM sessions WHERE sessionID = $1 AND refreshToken = $2"
+func (m *SessionsModel) DeleteSession(sessionID string) error {
+	query := "DELETE FROM sessions WHERE sessionID = $1"
 
-	res, err := m.DB.Exec(context.Background(), query, sessionID, refreshToken)
+	res, err := m.DB.Exec(context.Background(), query, sessionID)
 	if err != nil {
 		return err
 	}

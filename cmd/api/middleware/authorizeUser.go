@@ -32,10 +32,13 @@ func Authorize(c *fiber.Ctx) error {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return c.SendStatus(http.StatusUnauthorized)
+			return internal.ClientError(c, http.StatusUnauthorized, internal.DefaultError{
+				Code:    "TOKEN_EXPIRED",
+				Message: "Access token has expired",
+			})
 		}
 
-		return internal.ServerError(c, err, "Failed to validate access token")
+		return c.SendStatus(http.StatusUnauthorized)
 	}
 
 	if !token.Valid {

@@ -25,14 +25,14 @@ type User struct {
 }
 
 type UserDTO struct {
-	UserID            string
-	Username          string
-	DisplayName       NullString
-	Email             string
-	JoinedAt          time.Time
-	UpdatedAt         time.Time
-	CustomStatus      NullString
-	ProfilePictureURL NullString
+	UserID            string     `json:"userID"`
+	Username          string     `json:"username"`
+	DisplayName       NullString `json:"displayName"`
+	Email             string     `json:"email"`
+	JoinedAt          time.Time  `json:"joinedAt"`
+	UpdatedAt         time.Time  `json:"updatedAt"`
+	CustomStatus      NullString `json:"customStatus"`
+	ProfilePictureURL NullString `json:"profilePictureURL"`
 }
 
 type UserModel struct {

@@ -161,22 +161,7 @@ func (s *Server) Login(c *fiber.Ctx) error {
 }
 
 func (s *Server) Logout(c *fiber.Ctx) error {
-	var logoutuserDTO refreshTokenDTO
-	err := c.BodyParser(&logoutuserDTO)
-	if err != nil {
-		return err
-	}
-
-	result, err := validator.Validate(logoutuserDTO)
-	if err != nil {
-		return internal.ServerError(c, err, "Failed to validate request body")
-	}
-
-	if !result.IsValid {
-		return result.SendValidationError(c)
-	}
-
-	err = s.Sessions.DeleteSession(c.Locals("sessionID").(string), logoutuserDTO.Token)
+	err := s.Sessions.DeleteSession(c.Locals("sessionID").(string))
 	if err != nil {
 		if errors.Is(err, models.ErrNoSessionsFound) {
 			return internal.ClientError(c, http.StatusUnprocessableEntity, internal.DefaultError{

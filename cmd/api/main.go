@@ -74,6 +74,8 @@ func main() {
 		Users:         &models.UserModel{DB: pool},
 		Sessions:      &models.SessionsModel{DB: pool},
 		Relationships: &models.RelationshipModel{DB: pool},
+
+		Websocket: &websocketServer,
 	}
 
 	// load routes

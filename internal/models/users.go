@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/CDavidSV/Iris-Chat-App-Backend/internal"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
@@ -101,6 +102,23 @@ func (m *UserModel) FetchUser(userID string) (UserDTO, error) {
 	row := m.DB.QueryRow(context.Background(), query, userID)
 	err := row.Scan(&user.UserID, &user.Username, &user.Email, &user.JoinedAt, &user.CustomStatus, &user.ProfilePictureURL, &user.UpdatedAt, &user.DisplayName)
 	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (m *UserModel) FetchUserByUsername(username string) (UserDTO, error) {
+	query := "SELECT userID, username, email, joinedAt, customStatus, profilePictureURL, updatedAt, displayName FROM users WHERE username LIKE '$1%'"
+
+	user := UserDTO{}
+	row := m.DB.QueryRow(context.Background(), query, username)
+	err := row.Scan(&user.UserID, &user.Username, &user.Email, &user.JoinedAt, &user.CustomStatus, &user.ProfilePictureURL, &user.UpdatedAt, &user.DisplayName)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user, ErrUserNotFound
+		}
+
 		return user, err
 	}
 

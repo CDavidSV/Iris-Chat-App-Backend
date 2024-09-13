@@ -12,25 +12,34 @@ type Relationship struct {
 	Status string
 }
 
+type RelationshipUserDTO struct {
+	UserID            string `json:"userID"`
+	Username          string `json:"username"`
+	DisplayName       string `json:"displayName"`
+	ProfilePictureURL string `json:"profilePictureURL"`
+}
+
 type RelationshipModel struct {
 	DB *pgxpool.Pool
 }
 
-func (m *RelationshipModel) FetchRelationships(userID string) ([]Relationship, error) {
-	query := "SELECT * FROM relationships WHERE userA = $1 OR (userB = $1 AND status = 'pending')"
+func (m *RelationshipModel) FetchRelationships(userID string) ([]RelationshipUserDTO, error) {
+	query := `SELECT u.userID, u.username, u.displayName, u.profilePictureURL FROM relationships r 
+				JOIN users u ON r.userB = u.userID
+				WHERE userA = $1 OR (userB = $1 AND status = 'pending')`
 
 	rows, err := m.DB.Query(context.Background(), query, userID)
 	if err != nil {
-		return []Relationship{}, err
+		return []RelationshipUserDTO{}, err
 	}
 
-	var relationships []Relationship
+	var relationships []RelationshipUserDTO
 	for rows.Next() {
-		var r Relationship
-		err := rows.Scan(&r.UserA, &r.UserB, &r.Status)
+		var r RelationshipUserDTO
+		err := rows.Scan(&r.UserID, &r.Username, &r.DisplayName, &r.ProfilePictureURL)
 
 		if err != nil {
-			return []Relationship{}, err
+			return []RelationshipUserDTO{}, err
 		}
 
 		relationships = append(relationships, r)
@@ -39,15 +48,15 @@ func (m *RelationshipModel) FetchRelationships(userID string) ([]Relationship, e
 	return relationships, nil
 }
 
-func (m *RelationshipModel) SetRelationship(userA, userB string) (bool, error) {
+func (m *RelationshipModel) SetRelationship(userA, userB string) (string, error) {
 	if userA == userB {
-		return false, ErrSameUser
+		return "", ErrSameUser
 	}
 
 	query := "SELECT * FROM relationships WHERE (userA = $1 AND userB = $2) OR (userA = $2 AND userB = $1)"
 	rows, err := m.DB.Query(context.Background(), query, userA, userB)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	var friendship []Relationship
@@ -55,7 +64,7 @@ func (m *RelationshipModel) SetRelationship(userA, userB string) (bool, error) {
 	for rows.Next() {
 		err := rows.Scan(&r.UserA, &r.UserB, &r.Status)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
 		friendship = append(friendship, r)
@@ -65,12 +74,12 @@ func (m *RelationshipModel) SetRelationship(userA, userB string) (bool, error) {
 	case 1:
 		// Update the existing relationship
 		if friendship[0].UserA == userA {
-			return true, nil
+			return "REQUEST_ALREADY_SENT", nil
 		} else { // If the relationship is pending, accept it
 			// Start a transaction
 			tx, err := m.DB.Begin(context.Background())
 			if err != nil {
-				return false, err
+				return "", err
 			}
 
 			// Insert the new relationship
@@ -78,7 +87,7 @@ func (m *RelationshipModel) SetRelationship(userA, userB string) (bool, error) {
 			res, err := tx.Exec(context.Background(), query, userA, userB)
 			if err != nil || res.RowsAffected() == 0 {
 				tx.Rollback(context.Background())
-				return false, err
+				return "", err
 			}
 
 			// Update the existing one if exists, else insert it again
@@ -86,42 +95,37 @@ func (m *RelationshipModel) SetRelationship(userA, userB string) (bool, error) {
 			res, err = tx.Exec(context.Background(), query, userB, userA)
 			if err != nil || res.RowsAffected() == 0 {
 				tx.Rollback(context.Background())
-				return false, err
+				return "", err
 			}
 
 			tx.Commit(context.Background())
 
-			// TODO: Send a notification to the user that the friend request has been accepted
-			// TODO: Create a new channel for the user
-
-			return true, nil
+			return "REQUEST_ACCEPTED", nil
 		}
 	case 2: // If the query yields 2 results, the relationship already exists
-		return false, ErrRelationshipExists
+		return "", ErrRelationshipExists
 	default:
 		// Insert the new relationship
 		query = "INSERT INTO relationships (userA, userB, status) VALUES ($1, $2, 'pending')"
 		res, err := m.DB.Exec(context.Background(), query, userA, userB)
 		if err != nil || res.RowsAffected() == 0 {
-			return false, err
+			return "", err
 		}
 
-		// TODO: Send a notification to the user
-
-		return true, nil
+		return "REQUEST_SENT", nil
 	}
 }
 
-func (m *RelationshipModel) DeleteRelationship(userA, userB string) (bool, error) {
+func (m *RelationshipModel) DeleteRelationship(userA, userB string) error {
 	if userA == userB {
-		return false, ErrSameUser
+		return ErrSameUser
 	}
 
-	query := "DELETE FROM friends WHERE LEAST(userA, userB) = LEAST($1, $2) AND GREATEST(userA, userB) = GREATEST($1, $2)"
+	query := "DELETE FROM friends WHERE (userA = $1 AND userB = $2) OR (userA = $2 AND userB = $1)"
 	res, err := m.DB.Exec(context.Background(), query, userA, userB)
 	if err != nil || res.RowsAffected() == 0 {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }

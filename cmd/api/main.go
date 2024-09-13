@@ -11,6 +11,7 @@ import (
 	"github.com/CDavidSV/Iris-Chat-App-Backend/internal/models"
 	"github.com/CDavidSV/Iris-Chat-App-Backend/internal/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -60,12 +61,16 @@ func main() {
 		AllowMethods: "POST, GET, OPTION, PUT, DELETE, HEAD",
 	}))
 
+	// compression
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
+
+	// websockets
 	websocketServer := websocket.WebsocketServer{
 		DB:                pool,
 		AccessTokenSecret: os.Getenv("ACCESS_TOKEN_SECRET"),
 	}
-
-	// websockets
 	app.Use("/ws", websocketServer.WebsocketUpgrade)
 	app.Get("/ws", websocketServer.NewWebsocket())
 

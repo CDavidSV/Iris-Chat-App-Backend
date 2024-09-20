@@ -8,8 +8,10 @@ type WebsocketMessage struct {
 }
 
 type FriendStatus struct {
-	Type   string `json:"type"`   // Can ber either REQUEST, ACCEPTED, or REMOVED
-	UserID string `json:"userID"` // The user ID of the friend
+	Type              string `json:"type"`              // Can ber either REQUEST, ACCEPTED, or REMOVED
+	UserID            string `json:"userID"`            // The user ID of the friend
+	Username          string `json:"username"`          // The username of the friend
+	ProfilePictureURL string `json:"profilePictureURL"` // The profile picture URL of the friend
 }
 
 func (ws *WebsocketServer) UpdateFriendStatus(recipientID string, status FriendStatus) error {

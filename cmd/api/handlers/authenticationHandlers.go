@@ -34,8 +34,16 @@ type refreshTokenDTO struct {
 }
 
 func (s *Server) Register(c *fiber.Ctx) error {
+	err := internal.VerifyContentType(c, "application/x-www-form-urlencoded")
+	if err != nil {
+		return internal.ClientError(c, http.StatusUnsupportedMediaType, internal.DefaultError{
+			Code:    "UNSUPPORTED_MEDIA_TYPE",
+			Message: "Content-Type header must be application/x-www-form-urlencoded",
+		})
+	}
+
 	var registeruserDTO registerUserDTO
-	err := c.BodyParser(&registeruserDTO)
+	err = c.BodyParser(&registeruserDTO)
 	if err != nil {
 		return err
 	}
@@ -105,8 +113,16 @@ func (s *Server) Register(c *fiber.Ctx) error {
 }
 
 func (s *Server) Login(c *fiber.Ctx) error {
+	err := internal.VerifyContentType(c, "application/x-www-form-urlencoded")
+	if err != nil {
+		return internal.ClientError(c, http.StatusUnsupportedMediaType, internal.DefaultError{
+			Code:    "UNSUPPORTED_MEDIA_TYPE",
+			Message: "Content-Type header must be application/x-www-form-urlencoded",
+		})
+	}
+
 	var loginuserDTO loginUserDTO
-	err := c.BodyParser(&loginuserDTO)
+	err = c.BodyParser(&loginuserDTO)
 	if err != nil {
 		return err
 	}
@@ -177,8 +193,16 @@ func (s *Server) Logout(c *fiber.Ctx) error {
 }
 
 func (s *Server) Token(c *fiber.Ctx) error {
+	err := internal.VerifyContentType(c, "application/x-www-form-urlencoded")
+	if err != nil {
+		return internal.ClientError(c, http.StatusUnsupportedMediaType, internal.DefaultError{
+			Code:    "UNSUPPORTED_MEDIA_TYPE",
+			Message: "Content-Type header must be application/x-www-form-urlencoded",
+		})
+	}
+
 	var refreshDTO refreshTokenDTO
-	err := c.BodyParser(&refreshDTO)
+	err = c.BodyParser(&refreshDTO)
 	if err != nil {
 		return err
 	}

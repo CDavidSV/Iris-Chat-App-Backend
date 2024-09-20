@@ -2,7 +2,9 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -37,6 +39,7 @@ func GenerateID() string {
 
 func ServerError(c *fiber.Ctx, err error, errorMsg string) error {
 	log.Error(err)
+	fmt.Println(string(debug.Stack()))
 
 	errorJson := map[string]any{
 		"status": http.StatusInternalServerError,

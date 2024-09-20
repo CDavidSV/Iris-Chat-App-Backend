@@ -79,6 +79,7 @@ func main() {
 		Users:         &models.UserModel{DB: pool},
 		Sessions:      &models.SessionsModel{DB: pool},
 		Relationships: &models.RelationshipModel{DB: pool},
+		Channels:      &models.ChannelModel{DB: pool},
 
 		Websocket: &websocketServer,
 	}

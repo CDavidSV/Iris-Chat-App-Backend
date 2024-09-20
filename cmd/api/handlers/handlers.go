@@ -13,6 +13,7 @@ type Server struct {
 	Users         *models.UserModel
 	Sessions      *models.SessionsModel
 	Relationships *models.RelationshipModel
+	Channels      *models.ChannelModel
 
 	Websocket *websocket.WebsocketServer
 }
@@ -29,11 +30,19 @@ func (s *Server) LoadRoutes(app *fiber.App) {
 	app.Post("/auth/token", s.Token)
 
 	// User
-	app.Get("user/me", middleware.Authorize, s.GetMe)
-	app.Get("user/:userID", middleware.Authorize, s.GetUser)
+	app.Get("users/me", middleware.Authorize, s.GetMe)
+	app.Get("users/username/:username", middleware.Authorize, s.GetUsersByUsername)
+	app.Get("users/id/:userID", middleware.Authorize, s.GetUser)
 
 	// Relationships
-	app.Get("/relationships", middleware.Authorize, s.GetRelationships)
-	app.Post("/relationships/:username", middleware.Authorize, s.CreateRelationship)
+	app.Get("/relationships/friends", middleware.Authorize, s.GetFriendships)
+	app.Get("/relationships/requests", middleware.Authorize, s.GetFriendRequests)
+	app.Get("/relationships/blocked", middleware.Authorize, s.GetBlockedUsers)
+	app.Post("/relationships/:userID", middleware.Authorize, s.CreateRelationship)
 	app.Delete("/relationships/:userID", middleware.Authorize, s.DelRelationship)
+	app.Put("/relationships/:userID", middleware.Authorize, s.BlockUser)
+
+	// Profile
+	app.Put("/profile/update", middleware.Authorize, s.UpdateProfile)
+	app.Post("/profile/change-password", middleware.Authorize, s.ChangePassword)
 }
